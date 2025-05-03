@@ -104,23 +104,23 @@ def index_points(points, idx):
     return new_points
 def read_point_cloud(file_path):
     """
-    读取点云数据，假设每行格式为 'x y z'。
+  
 
     参数:
-    file_path (str): 点云数据文件的路径。
+    file_path (str): 
 
     返回:
-    points (list of tuples): 包含点云数据的列表，每个元素是一个 (x, y, z) 元组。
+    points (list of tuples): 
     """
     points = []
     with open(file_path, 'r') as file:
         for line in file:
-            # 去除行末的换行符和可能的空白字符
+           
             line = line.strip()
-            # 跳过空行
+          
             if not line:
                 continue
-                # 分割行，并转换为浮点数
+              
             parts = line.split()
             if len(parts) == 3:
                 x, y, z = float(parts[0]), float(parts[1]), float(parts[2])
@@ -129,7 +129,7 @@ def read_point_cloud(file_path):
                 print(f"警告: 跳过格式不正确的行: {line}")
     return points
 
-#判断离散点并进行删除
+
 def remove_outliers(xyzout,k,a):
      device = xyzout.device
      xyzout = xyzout.cpu().numpy()
@@ -145,22 +145,22 @@ def remove_outliers(xyzout,k,a):
 
 
 def tensor_remove_outliers(xyzout, k, a):
-    # 获取设备信息
+
     device = xyzout.device
 
-    # 计算点之间的成对欧氏距离
+
     n = xyzout.size(0)
     xyzout_expanded = xyzout.unsqueeze(1).expand(n, n, -1)  # (n, 1, 3) -> (n, n, 3)
     dist_sq = torch.sum((xyzout_expanded - xyzout.unsqueeze(0).expand(n, n, -1)) ** 2, dim=2)  # (n, n)
 
-    # 找到每个点的k个最近邻
+
     dist_sq_topk, idx_topk = torch.topk(dist_sq, k, dim=1, largest=False)  # (n, k)
 
-    # 计算到k个最近邻的平均距离
+
     avg = torch.mean(dist_sq_topk, dim=1)  # (n,)
     avgtotal = torch.mean(avg)  # 标量
 
-    # 根据阈值过滤点
+
     idx = torch.where(avg < a * avgtotal)[0]  # (m,) m <= n
     xyzout_filtered = xyzout[idx, :]  # (m, 3)
 
@@ -169,40 +169,37 @@ def tensor_remove_outliers(xyzout, k, a):
 #nearest_neighbor_interpolation
 def batch_nearest_neighbor_interpolation(input_clouds):
     """
-    对批量输入点云进行最近邻插值，
-
     参数:
-    input_clouds (torch.Tensor): 输入点云批次，形状为 (B, N, C)，
-                                 其中 B 是批次大小，N 是点的数量，C 是特征数。
+    input_clouds (torch.Tensor): 
 
     返回:
-    torch.Tensor: 插值后的点云批次，形状为 (B, M, C)，其中 M 是插值后点的数量。
+    torch.Tensor: 
     """
     B, N, C = input_clouds.size()
     if torch.isnan(input_clouds).any() or torch.isinf(input_clouds).any():
         raise ValueError("Input clouds contain NaN or Inf values.")
-    # 扩展维度以便进行广播计算
+
     # input_clouds: (B, N, C) -> (B, N, 1, C)
     # input_clouds_t: (B, N, C) -> (B, 1, N, C)
     input_clouds_expanded = input_clouds.unsqueeze(2)  # (B, N, 1, C)
     input_clouds_transposed = input_clouds.unsqueeze(1)  # (B, 1, N, C)
 
-    # 计算批次内所有点之间的欧几里得距离的平方
+   
     # diff: (B, N, N, C)
     # diff = input_clouds_expanded - input_clouds_transposed
     # dist_squared = torch.sum(diff ** 2, dim=-1)  # (B, N, N)
     dist_squared = torch.norm(input_clouds_expanded - input_clouds_transposed, dim=-1)
 
-    # 设置对角线为无穷大，以避免自身最近邻
+   
     diag_mask = torch.eye(N, dtype=torch.bool, device=input_clouds.device)
     diag_mask = diag_mask.unsqueeze(0)
     diag_mask = diag_mask.expand(B, -1, -1)  # (B, N, N)
     dist_squared[diag_mask] = float('inf')
 
-    # 找到最近邻的索引
+    
     nearest_idx = torch.argmin(dist_squared, dim=-1)  # (B, N)
 
-    # 使用高级索引获取最近邻点
+   
     # nearest_points: (B, N, C)
     nearest_points = torch.gather(input_clouds, dim=1, index=nearest_idx.unsqueeze(-1).expand(-1, -1, C))
 
@@ -212,7 +209,7 @@ def batch_nearest_neighbor_interpolation(input_clouds):
 
     combined_points = torch.cat([input_clouds, interpolated_points], dim=1)
 
-    # 如果需要，只返回插值后的点云
+
     return combined_points   #(B,2*N,C)
 
 
@@ -251,27 +248,27 @@ def ball_query_centroid1(points, radius):
     """
     B, C, N = points.shape
 
-    # 确保 radii 的形状为 (B, 1)
-    assert radius.shape == (B, 1), "radii 的形状必须为 (B, 1)"
+  
+    assert radius.shape == (B, 1), 
 
-    # 将 points 转换为 (B, N, C) 以方便计算
-      # 形状: (B, N, C)
+   
 
-    # 计算批次内所有点之间的成对距离
+
+ 
     diff = points.unsqueeze(2) - points.unsqueeze(1)  # 形状: (B, N, N, C)
     distances = torch.norm(diff, dim=3)  # 形状: (B, N, N)
 
-    # 扩展半径以进行广播，形状从 (B, 1) 扩展到 (B, N, N)
+  
     radii = radius.unsqueeze(2)  # 形状: (B, 1, N) -> (B, N, 1) 再广播到 (B, N, N)
 
-    # 创建掩码以识别在半径范围内的点
+ 
     within_radius_mask = distances <=10*radii  # 形状: (B, N, N)
    # within_radius_mask = (distances >= radii) & (distances <= 1.3 * radii)
-    # 计算每个球内点的总和和计数
+
     sum_points = torch.einsum('bnc,bni->bci', points, within_radius_mask.float()).permute(0,2,1) # 形状: (B, C, N)
     count_points = within_radius_mask.sum(dim=2,keepdim=True).float()  # 形状: (B, N, 1)
 
-    # 通过扩展维度确保广播，计算质心
+
     count_points_clamped = torch.clamp(count_points, min=1.0)
 
     # Compute centroids
@@ -318,13 +315,13 @@ def ball_query_centroid(points, radius):
     """
     B, N, C = points.shape
 
-    # 确保 radii 的形状为 (B, 1)
-    assert radius.shape == (B, 1), "radii 的形状必须为 (B, 1)"
 
-    # 将 points 转换为 (B, N, C) 以方便计算
-      # 形状: (B, N, C)
+    assert radius.shape == (B, 1), 
 
-    # 计算批次内所有点之间的成对距离
+
+
+
+
     diff = points.unsqueeze(2) - points.unsqueeze(1)  # 形状: (B, N, N, C)
     distances = torch.norm(diff,p=2, dim=3)  # 形状: (B, N, N)
    # print(distances)
@@ -332,28 +329,28 @@ def ball_query_centroid(points, radius):
     distances[diag_mask] = float('inf')
    # nearest_idx = torch.argmin(distances, dim=-1)  # (B, N)(B, N)
    # nearest_distances = torch.gather(distances, dim=-1, index=nearest_idx.unsqueeze(-1)).squeeze(-1)
-    # 扩展半径以进行广播，形状从 (B, 1) 扩展到 (B, N, N)
-    radii = radius.unsqueeze(2)  # 形状: (B, 1, N) -> (B, N, 1) 再广播到 (B, N, N)
 
-    # 创建掩码以识别在半径范围内的点
-    # within_radius_mask = distances <= 4*radii  # 形状: (B, N, N)
+    radii = radius.unsqueeze(2)  
+
+
+    # within_radius_mask = distances <= 4*radii 
     within_radius_mask =distances <=10* radii
 
    # within_radius_mask = (distances >= radii) & (distances <= 1.3 * radii)
 
     # true_counts = within_radius_mask.sum(dim=2)
    # print(true_counts)
-    # 计算每个球内点的总和和计数
-    sum_points = torch.einsum('bnc,bni->bci', points, within_radius_mask.float()) # 形状: (B, C, N)
-    count_points = within_radius_mask.sum(dim=2,keepdim=True).float()  # 形状: (B, N, 1)
+ 
+    sum_points = torch.einsum('bnc,bni->bci', points, within_radius_mask.float()) 
+    count_points = within_radius_mask.sum(dim=2,keepdim=True).float() 
 
-    # 通过扩展维度确保广播，计算质心
+ 
     count_points_clamped = torch.clamp(count_points, min=1.0)
 
     # Compute centroids
     centroids = sum_points / count_points_clamped.view(B, 1, N)
 
-    # 将质心转换回 (B, C, N)
+ 
 
 
     return centroids.permute(0,2,1)
@@ -362,17 +359,17 @@ def ball_query_centroid(points, radius):
 
 
 def Calculated_centroid1(points):
-    device = points.device  # 确保在GPU上运行
-    B, N, C = points.shape  # 批处理大小，点云数量和每个点的维度
+    device = points.device  
+    B, N, C = points.shape  
 
-    # 计算每个批次中点的最近邻距离
+
     nearest_neighbor_distances = compute_nearest_neighbor_distances_batch(points).to(device)
 
-    # 计算每个批次的平均距离 d
+
     d_batch = torch.sum(nearest_neighbor_distances, dim=1) / N  # (B,)
     avg_distances = d_batch.unsqueeze(1)
 
-    # 使用平均距离 d 作为半径执行球查询
+
     centroid=ball_query_centroid1(points,avg_distances).to(device)
    # centroid=ball_query_centroid1(points,avg_distances).to(device)
 
@@ -380,38 +377,38 @@ def Calculated_centroid1(points):
 
 def batch_uniform_interpolation(input_clouds):
     """
-    对批量输入点云进行均匀插值。
+
 
     参数:
-    input_clouds (torch.Tensor): 输入点云批次，形状为 (B, N, C)，
-                                 其中 B 是批次大小，N 是点的数量，C 是特征数。
+    input_clouds (torch.Tensor): 
+                                
 
     返回:
-    torch.Tensor: 插值后的点云批次，形状为 (B, 2*N, C)，其中 2*N 是插值后点的数量。
+    torch.Tensor: 
     """
     B, N, C = input_clouds.shape
     if torch.isnan(input_clouds).any() or torch.isinf(input_clouds).any():
         raise ValueError("Input clouds contain NaN or Inf values.")
 
-    # 扩展输入点云以便进行批处理最近邻搜索
+
     expanded_cloud = input_clouds.unsqueeze(2).expand(B, N, N, C)
     diff = expanded_cloud - expanded_cloud.transpose(1, 2)
     dist_squared = torch.sum(diff ** 2, dim=-1)
 
-    # 设置对角线为无穷大，以避免自身最近邻
+
     diag_mask = torch.eye(N, dtype=torch.bool).unsqueeze(0).expand(B, N, N)
     dist_squared[diag_mask] = float('inf')
-    # 获取两个最近邻的索引
+
     nearest_idx = torch.topk(dist_squared, k=2, largest=False).indices
 
-    # 获取最近邻点
+
     nearest_points = torch.gather(input_clouds.unsqueeze(2).expand(B, N, N, C), dim=1,
                                   index=nearest_idx.unsqueeze(-1).expand(-1, -1, -1, C))
 
-    # 计算均匀插值点 (简单平均)
+
     interpolated_points = nearest_points.mean(dim=2)
 
-    # 将原始点和插值点组合在一起
+
   #  combined_points = torch.cat([input_clouds, interpolated_points], dim=1)
 
     return  interpolated_points
@@ -427,10 +424,10 @@ def save_xyz_file(numpy_array ,xyz_dir):
     return
 def parse_xyz_file(file_path):
     """
-    解析.xyz文件，返回点的坐标列表。
+  
 
-    :param file_path: .xyz文件的路径
-    :return: 点的坐标列表，每个点是一个(x, y, z)元组
+    :param file_path:
+    :return: 
     """
     with open(file_path, 'r') as file:
         points = []
@@ -457,7 +454,7 @@ if __name__ =="__main__":
    #
    #  d =Calculated_centroid(point_cloud)
    #  preprocessor = upmesh1(r=4)
-   #  preprocessor.cuda()  # 将模型移动到 GPU
+   #  preprocessor.cuda() 
     file_name = 'poisson_256_00003.xyz'
     file_name1='poisson_1024_00003.xyz'
     directory = '../network'
@@ -477,7 +474,7 @@ if __name__ =="__main__":
        preds =downsampled_point_cloud.data.cpu().numpy()[0]
 
      #  print(preds)
-       #保存为.xyz文件
+
       # preds = pred.data.cpu().numpy()[0]
        save_file = 'xxx.xyz'
 
