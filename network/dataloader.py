@@ -4,12 +4,6 @@ import os
 
 
 def parse_xyz_file(file_path):
-    """
-    解析.xyz文件，返回点的坐标列表。
-
-    :param file_path: .xyz文件的路径
-    :return: 点的坐标列表，每个点是一个(x, y, z)元组
-    """
     with open(file_path, 'r') as file:
         points = []
         for line in file:
@@ -24,11 +18,11 @@ class dataset(Dataset):
         self.coordinates = parse_xyz_file(file_path)
 
     def __len__(self):
-        # 这里假设整个文件是一个样本，返回1。如果文件中有多个样本，需要相应调整。
+       
         return 1
 
     def __getitem__(self, idx):
-        # 将坐标转换为 tensor
+       
         coordinates_tensor = torch.tensor(self.coordinates, dtype=torch.float32)
         return coordinates_tensor
 
