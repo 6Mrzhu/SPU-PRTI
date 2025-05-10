@@ -336,7 +336,7 @@ class Upsampling(nn.Module):
 
         up_point = duplicated_point + offset
 
-        return up_point, up_feat  # up_point 是插值与特征扩张之后的点集      up_feat 是拓展特征
+        return up_point, up_feat  #
 
     def get_g(self):
         return self.regressor.get_g()
@@ -371,7 +371,7 @@ class Upsampling_unit(nn.Module):
         up_feat = torch.relu(up_feat)
         duplicated_point = self.intorpreate_point(points.permute(0, 2, 1)).permute(0, 2, 1).contiguous()
         # duplicated_point =self.MLP(duplicated_feat)
-        return up_feat, duplicated_point  # （点数回复到输入点）   #(4,128,512)   \(4,3,256)
+        return up_feat, duplicated_point  
 
 
 class RFA(nn.Module):
