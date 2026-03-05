@@ -7,7 +7,7 @@ import torch
 from pointnet2_ops_lib.pointnet2_ops.pointnet2_utils import furthest_point_sample, gather_operation
 
 
-from SPUDMI import SPUNet
+from SPUPRTI import SPUNet
 def farthest_point_sample(xyz, npoint):
     """
     Input:
