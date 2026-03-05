@@ -106,10 +106,10 @@ def read_point_cloud(file_path):
     """
   
 
-    参数:
+ 
     file_path (str): 
 
-    返回:
+    return:
     points (list of tuples): 
     """
     points = []
@@ -126,7 +126,7 @@ def read_point_cloud(file_path):
                 x, y, z = float(parts[0]), float(parts[1]), float(parts[2])
                 points.append((x, y, z))
             else:
-                print(f"警告: 跳过格式不正确的行: {line}")
+                print(f"{line}")
     return points
 
 
@@ -169,10 +169,10 @@ def tensor_remove_outliers(xyzout, k, a):
 #nearest_neighbor_interpolation
 def batch_nearest_neighbor_interpolation(input_clouds):
     """
-    参数:
+
     input_clouds (torch.Tensor): 
 
-    返回:
+
     torch.Tensor: 
     """
     B, N, C = input_clouds.size()
@@ -203,7 +203,7 @@ def batch_nearest_neighbor_interpolation(input_clouds):
     # nearest_points: (B, N, C)
     nearest_points = torch.gather(input_clouds, dim=1, index=nearest_idx.unsqueeze(-1).expand(-1, -1, C))
 
-    # 计算插值点
+
     # interpolated_points: (B, N, C)
     interpolated_points = (input_clouds + nearest_points) / 2.0
 
@@ -255,18 +255,18 @@ def ball_query_centroid1(points, radius):
 
 
  
-    diff = points.unsqueeze(2) - points.unsqueeze(1)  # 形状: (B, N, N, C)
-    distances = torch.norm(diff, dim=3)  # 形状: (B, N, N)
+    diff = points.unsqueeze(2) - points.unsqueeze(1)  
+    distances = torch.norm(diff, dim=3) 
 
   
-    radii = radius.unsqueeze(2)  # 形状: (B, 1, N) -> (B, N, 1) 再广播到 (B, N, N)
+    radii = radius.unsqueeze(2)  
 
  
-    within_radius_mask = distances <=10*radii  # 形状: (B, N, N)
+    within_radius_mask = distances <=10*radii 
    # within_radius_mask = (distances >= radii) & (distances <= 1.3 * radii)
 
-    sum_points = torch.einsum('bnc,bni->bci', points, within_radius_mask.float()).permute(0,2,1) # 形状: (B, C, N)
-    count_points = within_radius_mask.sum(dim=2,keepdim=True).float()  # 形状: (B, N, 1)
+    sum_points = torch.einsum('bnc,bni->bci', points, within_radius_mask.float()).permute(0,2,1) 
+    count_points = within_radius_mask.sum(dim=2,keepdim=True).float()  
 
 
     count_points_clamped = torch.clamp(count_points, min=1.0)
@@ -274,7 +274,7 @@ def ball_query_centroid1(points, radius):
     # Compute centroids
     centroids = sum_points / count_points_clamped
 
-    # 将质心转换回 (B, C, N)
+  
 
 
     return centroids
@@ -379,11 +379,11 @@ def batch_uniform_interpolation(input_clouds):
     """
 
 
-    参数:
+   
     input_clouds (torch.Tensor): 
                                 
 
-    返回:
+  
     torch.Tensor: 
     """
     B, N, C = input_clouds.shape
@@ -439,7 +439,7 @@ def parse_xyz_file(file_path):
 if __name__ =="__main__":
    # point_cloud = torch.rand(5, 160, 3).cuda()
     preprocessor =upmesh11(r=4)
-    preprocessor.cuda()  # 将模型移动到 GPU
+    preprocessor.cuda()
     # #
    # downsampled_point_cloud = preprocessor(point_cloud)
     # print(downsampled_point_cloud.shape)
@@ -514,5 +514,6 @@ if __name__ =="__main__":
    #  ax2.view_init(elev=30, azim=135)
    #  plt.show()
   #  print(down_point.shape)
+
 
 
