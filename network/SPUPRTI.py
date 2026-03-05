@@ -113,8 +113,7 @@ def query_knn_point(k, xyz, new_xyz):
 
 class Transformer(nn.Module):
     """
-    [Point Transformer](https://openaccess.thecvf.com/content/ICCV2021/papers/Zhao_Point_Transformer_ICCV_2021_paper.pdf)
-
+    
     feed forward of transformer
     Args:
         x: Tensor of features, (B, in_channel, n)
@@ -251,7 +250,6 @@ class Conv2d(nn.Module):
 
 class SPUNet(torch.nn.Module):
     """
-    SPU-PMD: Self-Supervised Point Cloud Upsampling via Progressive Mesh Deformation
     Input:
         points: Input points, (B, 3, N_input)
     Output:
@@ -538,7 +536,7 @@ class pointFRA(nn.Module):
         R = self.sigmoid(R)
 
         S_old = self.s_corr(point, point1, None, pre_h)
-        # 这里有问题
+        
         S_new = torch.cat(tensors=[pre_h, R * cur_f], dim=1)
         S_new = self.fc(S_new)
         S_new = self.tanh(S_new)
@@ -635,7 +633,7 @@ class up_block(nn.Module):
         # print(net.device)
         net = torch.cat([net, grid.cuda()], dim=2)
         net = net.permute(0, 2, 1)  # b,130,n*4
-        # 新增加
+
         net = self.attentions(net)
 
         net = self.mlp1(net)
@@ -747,3 +745,4 @@ if __name__ == "__main__":
     point_cloud = torch.rand(2, 3, 256).cuda()
     gt = torch.rand(1, 1024, 3).cuda()
     output = generator(point_cloud)
+
